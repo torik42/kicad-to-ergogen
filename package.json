@@ -1,0 +1,12 @@
+{
+  "name": "kicad-to-ergogen",
+  "version": "0.0.1",
+  "author": "@torik42",
+  "license": "MIT",
+  "bin": "./src/cli.js",
+  "dependencies": {
+      "fs-extra": "^9.0.1",
+      "yargs": "^15.4.1",
+      "js-yaml": "^4.0.0"
+  }
+}
