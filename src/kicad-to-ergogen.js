@@ -163,7 +163,7 @@ const create_footprint = exports.create_footprint = function(raw, base_point, ba
         if (is_included) {
           const index_filled_polygon = elem.indexOf('filled_polygon')
           if (index_filled_polygon != undefined) {
-            elem.zone.splice(index_filled_polygon, 1)
+            elem.values.splice(index_filled_polygon, 1)
           }
           group.push(elem)
         }
@@ -192,7 +192,6 @@ const create_footprint = exports.create_footprint = function(raw, base_point, ba
       nets[NET_PREFIX + net] = all_nets[net]
     }
   }
-  logger(group[1].toString())
   
   
   // create the footprint file
@@ -214,7 +213,6 @@ exports.kicad_to_ergogen = function(raw, logger=()=>{}) {
   let config
   try {
     config = yaml.load(raw)
-    logger(config)
   } catch (err) {
     throw new Error(`Input is not valid YAML or JSON:\n${err}`)
   }
