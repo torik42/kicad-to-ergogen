@@ -16,14 +16,6 @@ Its data format is easier to work with, but makes it harder to output correct ki
 Clone the repository and run `npm install`.
 
 ## Usage
-Use [this](https://github.com/torik42/ergogen/tree/footprint-xy-anchor) branch of ergogen or add
-```
-    parsed_params.x = anchor.x
-    parsed_params.y = -anchor.y
-```
-below `parsed_params.rot = anchor.r` in `src/pcbs.js`.
-(Reason: For usual kicad footprints, the placement of the individual components is relative to the position of the footprint.
-Since we also want to place individual traces, we need to know where the module shall be placed.)
 A sample configuration with some explanation can be found in `example.yaml`.
 Create a similar file with all the chunks you want to export from the kicad file.
 Run `node src/cli.js <your/config/file>` from within this directory.
