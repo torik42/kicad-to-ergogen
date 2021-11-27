@@ -1,6 +1,5 @@
 const fs = require("fs-extra");
 const sexp_parser = require("./sexp-parser");
-const SExp = require('./sexp').SExp;
 const yaml = require('js-yaml')
 
 
@@ -39,17 +38,32 @@ const HAS_ROT = ['pad', 'fp_text', 'module']
  */
 const MODULE_ROTATE = ['pad', 'fp_text']
 /**
- * A Previx, which all keys of the netlist of the footprint get.
- * currently CN for custom net
+ * A Prefix, which all nets in the footprint get.
+ * Currently CN for custom net
  */
 const NET_PREFIX = 'CN'
 
+/**
+ * Make KiCad position into relative position.
+ * Shift `at` attribute by `-shift` and then rotated by `-rot`.
+ * Then change the rotation property (i.e. `at[2]`) by `-rot`.
+ * @param {at} array - array like [<x pos>, <y pos>] or [<x pos>, <y pos>, <rotation>]
+ * @param {shift} array - [<x shift>, <y shift>]
+ * @param {rot} number - additional rotation
+ * @param {change_shift} boolean - the position is only changed, if this key is true
+ * @param {change_rot} boolean - the rotation is only changed, if this key is true
+ */
 const inv_transform = function (at, shift, rot, change_shift, change_rot) {
   if (change_shift) at = rotate(add_shift(at, shift.map(x => -x)), -rot)
   if (change_rot) at = add_rot(at, -rot)
   return at
 }
 
+/**
+ * Create the Output for the ergogen footprint file,
+ * which takes care of positioning.
+ * Arguments as with `inv_transform`
+ */
 const output_tranform = function (at, change_shift, change_rot) {
   let out = ''
   // if (change_rot && at.length == 2) at.push(0)
@@ -67,6 +81,24 @@ const output_tranform = function (at, change_shift, change_rot) {
   return out
 }
 
+const modify_net = elem => {
+  // get net index
+  const c_net = elem.getNet()
+  // proceed if net present and net not ""
+  if (c_net != undefined && c_net > 0) {
+    const netsexp = elem.sexpOf('net')
+    // nets are either specified as (net <net_index> <net_name>)
+    // or (net <net_index>), sometimes accompanied by (net_name <net_name>)
+    if (netsexp.values.length == 1) {
+      netsexp.values[0] =  `\$\{p.net.${NET_PREFIX}${c_net}.index\}`
+      const netnamesexp = elem.sexpOf('net_name')
+      if (netnamesexp) netnamesexp.values[0] = `\$\{p.net.${NET_PREFIX}${c_net}.name\}`
+    } else if (netsexp.values.length == 2) {
+      elem.values[elem.indexOf('net')] = `\$\{p.net.${NET_PREFIX}${c_net}.str\}`
+    }
+  }
+}
+
 
 const create_footprint = exports.create_footprint = function(raw, base_point, base_rotate, area, logger=()=>{}) {
   const board = sexp_parser.parse(raw)
@@ -77,7 +109,6 @@ const create_footprint = exports.create_footprint = function(raw, base_point, ba
   const all_nets = {}
   const nets_numbers = new Set()
   const is_in_area = gen_at_in_area(area)
-  var c_index = undefined
 
   for (const elem of board.valuesIf('kicad_pcb')) {
     
@@ -91,8 +122,12 @@ const create_footprint = exports.create_footprint = function(raw, base_point, ba
       // if the element is a module, change the rotation of its subelements
       // and modify the nets
       if (elem.key == 'module') {
+        // only process module if it’s in the specified region
+        // do not change `at` property yet, it will be done later
+        if (!elem.change_at('at', is_in_area, x => x)) continue
         for (const mod_elem of elem.values) {
           if (typeof mod_elem == 'object'){
+            // change rotation of mod_elem if necessary 
             if (mod_elem.key != 'model') {
               const transform = (at) => {
                 var out = inv_transform(at, base_point, base_rotate, false, MODULE_ROTATE.includes(mod_elem.key))
@@ -101,19 +136,12 @@ const create_footprint = exports.create_footprint = function(raw, base_point, ba
               }
               mod_elem.change_at('at', true, transform)
             }
-      
-            var c_net = mod_elem.getNet()
-            nets_numbers.add(c_net)
-            c_index = mod_elem.indexOf('net')
-            if (c_net != undefined){
-              // nets of pads etc have syntax (net <net-number> <net-name>)
-              mod_elem.values[c_index] = `\$\{p.net.${NET_PREFIX}${c_net}.str\}`
-            }
-            
+            nets_numbers.add(mod_elem.getNet())
+            modify_net(mod_elem)
           }
         }
       }
-      
+            
       // Transformation for 'at', 'start', 'end' attributes of non-modules
       const transform = (at) => {
         var out = inv_transform(at, base_point, base_rotate, true, HAS_ROT.includes(elem.key))
@@ -123,8 +151,8 @@ const create_footprint = exports.create_footprint = function(raw, base_point, ba
       
       // if elem has 'at' attribute, modify it
       if (elem.change_at('at', is_in_area, transform)) {
-        nets_numbers.add(elem.getNet())
         group.push(elem)
+        nets_numbers.add(elem.getNet())
       }
       
       // transform traces which have (start …) (end …) instead of (at …)
@@ -134,6 +162,7 @@ const create_footprint = exports.create_footprint = function(raw, base_point, ba
         nets_numbers.add(elem.getNet())
       }
       
+      // Include zones, if all points specifying the zone are in the specified area
       if (elem.key == 'zone') {
         var is_included = true
         for (const pt of elem.sexpOf('polygon').sexpOf('pts').values) {
@@ -148,13 +177,18 @@ const create_footprint = exports.create_footprint = function(raw, base_point, ba
           }
         }
         if (is_included) {
+          // remove filled polygon
           const index_filled_polygon = elem.indexOf('filled_polygon')
           if (index_filled_polygon != undefined) {
             elem.values.splice(index_filled_polygon, 1)
           }
           group.push(elem)
+          nets_numbers.add(elem.getNet())
         }
       }
+      
+      // parametrise nets
+      modify_net(elem)
     }
   }
 
