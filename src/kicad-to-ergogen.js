@@ -114,15 +114,24 @@ const create_footprint = exports.create_footprint = function(raw, base_point, ba
         }
       }
       
-      // if elem has 'at' attribute, modify it
+      // Transformation for 'at', 'start', 'end' attributes of non-modules
       const transform = (at) => {
         var out = inv_transform(at, base_point, base_rotate, true, HAS_ROT.includes(elem.key))
         out = [output_tranform(out, true, HAS_ROT.includes(elem.key))]
         return out
       }
+      
+      // if elem has 'at' attribute, modify it
       if (elem.change_at('at', is_in_area, transform)) {
         nets_numbers.add(elem.getNet())
         group.push(elem)
+      }
+      
+      // transform traces which have (start …) (end …) instead of (at …)
+      if (elem.change_at('start', is_in_area, transform) &&
+      elem.change_at('end', is_in_area, transform)) {
+        group.push(elem)
+        nets_numbers.add(elem.getNet())
       }
       
       if (elem.key == 'zone') {
@@ -144,20 +153,6 @@ const create_footprint = exports.create_footprint = function(raw, base_point, ba
             elem.values.splice(index_filled_polygon, 1)
           }
           group.push(elem)
-        }
-      }
-      
-      // transform traces which have (start …) (end …) instead of (at …)
-      if (true){
-        const transform = (at) => {
-          var out = inv_transform(at, base_point, base_rotate, true, HAS_ROT.includes(elem.key))
-          out = [output_tranform(out, true, HAS_ROT.includes(elem.key))]
-          return out
-        }
-        if (elem.change_at('start', is_in_area, transform) &&
-        elem.change_at('end', is_in_area, transform)) {
-          group.push(elem)
-          nets_numbers.add(elem.getNet())
         }
       }
     }
