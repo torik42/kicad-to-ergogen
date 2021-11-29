@@ -217,6 +217,21 @@ const create_footprint = exports.create_footprint = function(raw, base_point, ba
   return create_footprint_file(nets, group)
 }
 
+const POSSIBLY_NEW_OBJECTS = ['module','segment','via']
+
+exports.create_traces_list = function(raw_unmodified, raw_modified, logger=()=>{}) {
+  // Load files
+  const unmodified = sexp_parser.parse(raw_unmodified).valuesIf('kicad_pcb')
+  const string_unmodified = unmodified.filter(item => POSSIBLY_NEW_OBJECTS.includes(item.key)).map(item => item.toUniqueString());
+  var modified = sexp_parser.parse(raw_modified).valuesIf('kicad_pcb')
+  modified = modified.filter(item => POSSIBLY_NEW_OBJECTS.includes(item.key))
+  // Find the new objects
+  const new_objects = modified.filter(item => !string_unmodified.includes(item.toUniqueString()))
+  logger(`Identified ${new_objects.length} new objects out of ${modified.length}.`)
+  return create_footprint_file(undefined, new_objects)
+}
+
+
 exports.kicad_to_ergogen = function(raw, logger=()=>{}) {
   let config
   try {
