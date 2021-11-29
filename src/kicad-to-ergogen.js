@@ -99,6 +99,20 @@ const modify_net = elem => {
   }
 }
 
+const create_footprint_file = function(nets, body_sexpr) {
+  // create the footprint file
+  const out = `module.exports = \{
+    nets: ${JSON.stringify(nets, null, 8)},
+    params: \{
+      class: 'custom'
+    \},
+    body: p => \{
+      return \`${body_sexpr.map(x => x.toString()).join('\n').replace(/\n/g, "\n    ")}\`
+    \}
+  \}`
+  return out
+}
+
 
 const create_footprint = exports.create_footprint = function(raw, base_point, base_rotate, area, logger=()=>{}) {
   const board = sexp_parser.parse(raw)
@@ -199,20 +213,8 @@ const create_footprint = exports.create_footprint = function(raw, base_point, ba
       nets[NET_PREFIX + net] = all_nets[net]
     }
   }
-  
-  
-  // create the footprint file
-  const out = `module.exports = \{
-    nets: ${JSON.stringify(nets, null, 8)},
-    params: \{
-      class: 'custom'
-    \},
-    body: p => \{
-      return \`${group.map(x => x.toString()).join('\n').replace(/\n/g, "\n    ")}\`
-    \}
-  \}`
 
-  return out
+  return create_footprint_file(nets, group)
 }
 
 exports.kicad_to_ergogen = function(raw, logger=()=>{}) {
