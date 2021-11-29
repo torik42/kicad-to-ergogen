@@ -1,6 +1,6 @@
 {
   "name": "kicad-to-ergogen",
-  "version": "0.0.1",
+  "version": "0.2.0",
   "author": "@torik42",
   "license": "MIT",
   "bin": "./src/cli.js",
