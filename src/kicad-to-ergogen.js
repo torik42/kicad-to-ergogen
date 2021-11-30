@@ -81,7 +81,7 @@ const output_tranform = function (at, change_shift, change_rot) {
   return out
 }
 
-const modify_net = elem => {
+const modify_net = (elem, all_nets) => {
   // get net index
   const c_net = elem.getNet()
   // proceed if net present and net not ""
@@ -90,14 +90,27 @@ const modify_net = elem => {
     // nets are either specified as (net <net_index> <net_name>)
     // or (net <net_index>), sometimes accompanied by (net_name <net_name>)
     if (netsexp.values.length == 1) {
-      netsexp.values[0] =  `\$\{p.net.${NET_PREFIX}${c_net}.index\}`
+      netsexp.values[0] =  `\$\{p.net["${all_nets[c_net]}"].index\}`
       const netnamesexp = elem.sexpOf('net_name')
-      if (netnamesexp) netnamesexp.values[0] = `\$\{p.net.${NET_PREFIX}${c_net}.name\}`
+      if (netnamesexp) netnamesexp.values[0] = `\$\{p.net["${all_nets[c_net]}"].name\}`
     } else if (netsexp.values.length == 2) {
-      elem.values[elem.indexOf('net')] = `\$\{p.net.${NET_PREFIX}${c_net}.str\}`
+      elem.values[elem.indexOf('net')] = `\$\{p.net["${all_nets[c_net]}"].str\}`
     }
   }
 }
+
+/*
+ * Collects all nets from a KiCad file
+ */
+const get_all_nets = function (pcb) {
+  const nets_sexpr = pcb.filter(x => x.key == 'net')
+  const all_nets = {}
+  for (x of nets_sexpr) {
+    all_nets[x.values[0]] = x.values[1].replace(/\"/g, "").replace(/\//g, "")
+  }
+  return all_nets
+}
+
 
 const create_footprint_file = function(nets, body_sexpr) {
   // create the footprint file
@@ -120,18 +133,13 @@ const create_footprint = exports.create_footprint = function(raw, base_point, ba
    * List of all Elements, we want to keep.
   */
   const group = []
-  const all_nets = {}
   const nets_numbers = new Set()
   const is_in_area = gen_at_in_area(area)
-
+  const all_nets = get_all_nets(board.valuesIf('kicad_pcb'))
+  
   for (const elem of board.valuesIf('kicad_pcb')) {
     
     if (typeof elem == 'object'){
-      
-      // collect all nets
-      if (elem.key == 'net') {
-        all_nets[elem.values[0]] = elem.values[1].replace(/\"/g, "")
-      }
     
       // if the element is a module, change the rotation of its subelements
       // and modify the nets
@@ -151,7 +159,7 @@ const create_footprint = exports.create_footprint = function(raw, base_point, ba
               mod_elem.change_at('at', true, transform)
             }
             nets_numbers.add(mod_elem.getNet())
-            modify_net(mod_elem)
+            modify_net(mod_elem, all_nets)
           }
         }
       }
@@ -202,7 +210,7 @@ const create_footprint = exports.create_footprint = function(raw, base_point, ba
       }
       
       // parametrise nets
-      modify_net(elem)
+      modify_net(elem, all_nets)
     }
   }
 
@@ -210,7 +218,7 @@ const create_footprint = exports.create_footprint = function(raw, base_point, ba
   const nets = {}
   for (const net of nets_numbers.values()) {
     if (net != undefined) {
-      nets[NET_PREFIX + net] = all_nets[net]
+      nets[all_nets[net]] = all_nets[net]
     }
   }
 
