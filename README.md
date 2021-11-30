@@ -10,8 +10,8 @@ This should make the design process of more complex boards faster.
 Also, this is my first JS project.
 Feel free to suggest improvements.
 
-If you want to process kicad files with JS, have a look at the [kicad-module-parser](https://github.com/jdthorpe/kicad-module-parser) from which I took the s-expression parser.
-Its data format is easier to work with, but makes it harder to output correct kicad files again.
+If you want to process KiCad files with JS, have a look at the [kicad-module-parser](https://github.com/jdthorpe/kicad-module-parser) from which I took the s-expression parser.
+Its data format is easier to work with, but makes it harder to output correct KiCad files again.
 
 ## Installation
 Clone the repository and run `npm install`.
@@ -38,7 +38,7 @@ pcbs:
 ```
 Now you run `node src/cli.js traces pcb.kicad_pcb pcb_with_traces.kicad_pcb --output traces_footprint_file` which will generate the ergogen footprint file `traces_footprint_file` containing all traces, vias and modules which are present in `pcb_with_traces.kicad_pcb` but not in `pcb.kicad_pcb`.
 You now need to make this available to ergogen by adding it to `footprints/index.js`.
-On all later runs of ergogen, you obtain the usual pcb and the pcb with the additional traces.
+On all later runs of ergogen, you obtain the usual PCB and the PCB with the additional traces.
 From now on, only edit the latter in KiCad.
 After saving in KiCad, run `traces` again to update the traces footprint file.
 Now running ergogen again, should not change `pcb_with_traces.kicad_pcb`.
