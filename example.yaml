@@ -6,7 +6,9 @@
       reference: [0,0] # centre of the footprint in kicad, or 'centre' for centre calculation
       rotation: 0 # rotation of the footprint in the kicad source
       area: # the area to define which elements shall be considered
-        x_min: -16
+        x_min: -16 # either specify a bounding box …
         x_max: 15
         y_min: -5
         y_max: 12
+        size: [10, 20] # … or the size of the rectange centered at `reference`.
+                       # then the bounding box is calculated, e.g. area.x_min = reference[0] - area.size[0] / 2

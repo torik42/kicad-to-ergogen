@@ -134,6 +134,12 @@ const create_footprint = exports.create_footprint = function(raw, base_point, ba
   */
   const group = []
   const nets_numbers = new Set()
+  if (area.size) {
+    if (area.x_min === undefined) area.x_min = base_point[0] - area.size[0]/2
+    if (area.x_max === undefined) area.x_max = base_point[0] + area.size[0]/2
+    if (area.y_min === undefined) area.y_min = base_point[1] - area.size[1]/2
+    if (area.y_max === undefined) area.y_max = base_point[1] + area.size[1]/2
+  }
   const is_in_area = gen_at_in_area(area)
   const all_nets = get_all_nets(board.valuesIf('kicad_pcb'))
   
