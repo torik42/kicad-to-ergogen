@@ -1,5 +1,8 @@
   file: "path/to/circuit.kicad_pcb" # global file
   outdir: "path/to/output/directory" # global output directory
+  indexfile: "path/to/indexfile.js" # output file for an index file containing
+                                    # all generated footprints
+                                    # (like ergogens scr/footprints/index.js)
   modules:
     - name: "power-circuit" # name of circuit
       out: "path/to/output/file.js" # (optional) default is <outdir>/<module.name>.js
