@@ -106,7 +106,7 @@ const get_all_nets = function (pcb) {
   const nets_sexpr = pcb.filter(x => x.key == 'net')
   const all_nets = {}
   for (x of nets_sexpr) {
-    all_nets[x.values[0]] = x.values[1].replace(/\"/g, "").replace(/\//g, "")
+    all_nets[x.values[0]] = x.values[1].replace(/\"/g, "").replace(/\//g, "").replace(/\./g, "-")
   }
   return all_nets
 }
@@ -232,11 +232,22 @@ exports.create_traces_list = function(raw_unmodified, raw_modified, logger=()=>{
   const unmodified = sexp_parser.parse(raw_unmodified).valuesIf('kicad_pcb')
   const string_unmodified = unmodified.filter(item => POSSIBLY_NEW_OBJECTS.includes(item.key)).map(item => item.toUniqueString());
   var modified = sexp_parser.parse(raw_modified).valuesIf('kicad_pcb')
+  const all_nets = get_all_nets(modified)
   modified = modified.filter(item => POSSIBLY_NEW_OBJECTS.includes(item.key))
   // Find the new objects
-  const new_objects = modified.filter(item => !string_unmodified.includes(item.toUniqueString()))
+  var new_objects = modified.filter(item => !string_unmodified.includes(item.toUniqueString()))
+  const nets_numbers = new Set()
+  new_objects.map(item => {nets_numbers.add(item.getNet()); return modify_net(item, all_nets)})
+  
+  // collect all used nets
+  const nets = {}
+  for (const net of nets_numbers.values()) {
+    if (net != undefined) {
+      nets[all_nets[net]] = all_nets[net]
+    }
+  }
   logger(`Identified ${new_objects.length} new objects out of ${modified.length}.`)
-  return create_footprint_file(undefined, new_objects)
+  return create_footprint_file(nets, new_objects)
 }
 
 
