@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 const fs = require('fs-extra')
+const path = require('path')
 const kicad_to_ergogen = require('./kicad-to-ergogen')
 const pkg = require('../package.json')
 const { program }= require('commander')
@@ -20,7 +21,7 @@ const footprints = function(config_file){
   }
 
   // create footprints
-  kicad_to_ergogen.kicad_to_ergogen(config_text, s => console.log(s))
+  kicad_to_ergogen.kicad_to_ergogen(config_text, path.dirname(path.resolve(config_file)), s => console.log(s))
 
   console.log('Done.')
 }

@@ -1,5 +1,9 @@
 # Changelog
 
+## Recent Changes
+
+- use node module `path` and properly handle relative paths
+
 ## Version 0.2.1
 
 - let `kicad-to-ergogen traces` export nets, such that ergogen can change net indices
