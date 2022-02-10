@@ -1,8 +1,9 @@
 # Changelog
 
-## Recent Changes
+## Version 0.3.0
 
 - use node module `path` and properly handle relative paths
+- add basic support for `kicad-to-ergogen footprint` which transforms KiCad footprint files into ergogen footprint files.
 
 ## Version 0.2.1
 
