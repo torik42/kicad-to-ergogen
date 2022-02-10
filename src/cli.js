@@ -57,6 +57,47 @@ const traces = function(unmodified_file, modified_file, out_file) {
 }
 
 
+const footprint = function(footprint_file, config_file, out_file){
+  
+  let config = {nets: {}}
+  if (config_file !== undefined) {
+    console.log('Reading config file...')
+    
+    // read config file
+    let config_text
+    try {
+      config_text = fs.readFileSync(config_file).toString()
+    } catch (err) {
+      console.error(`Could not read config file "${config_file}":\n${err}`)
+      process.exit(2)
+    }
+    
+    try {
+      config = yaml.load(raw)
+    } catch (err) {
+      throw new Error(`Input is not valid YAML or JSON:\n${err}`)
+    }
+    
+  }
+  
+  const nets = config.nets
+  
+  // read footprint file
+  console.log('Reading footprint file...')
+  let footprint_text
+  try {
+      footprint_text = fs.readFileSync(footprint_file).toString()
+  } catch (err) {
+      console.error(`Could not read footprint file "${footprint_file}":\n${err}`)
+      process.exit(2)
+  }
+  
+  out = kicad_to_ergogen.footprint(footprint_text, nets, logger=console.log)
+  fs.writeFileSync(out_file, out)
+  
+  console.log('Done.')
+}
+
 
 program
   .version(pkg.version)
@@ -73,5 +114,11 @@ program
   .argument('<modified>', 'partly routet KiCad File')
   .requiredOption('-o, --output <file>', 'file for ergogen footprint file containing traces')
   .action((unmodified_file, modified_file,options) => traces(unmodified_file, modified_file, options.output))
+
+program
+  .command('footprint <footprint-file>')
+  .description('create ergogen footprint file from KiCad footprint file')
+  .requiredOption('-o, --output <file>', 'file for generated ergogen footprint file')
+  .action((footprint_file, options) => footprint(footprint_file, undefined, options.output))
 
 program.parse()
