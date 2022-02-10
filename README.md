@@ -5,6 +5,10 @@ The idea is to generate the schematics of a board in KiCad, place the components
 Furthermore, it allows to export all traces which are added with KiCad to an ergogen PCB back into a footprint (see below for further explanation).
 This should make the design process of more complex boards faster.
 
+**This project works with KiCad 5 only!**
+As ergogen is build around KiCad 5 syntax, this project only supports KiCad 5 as well.
+I will consider rewriting the software, when ergogen changes to KiCad 6.
+
 *The software is still **WIP** and subject to change.*
 
 Also, this is my first JS project.
@@ -37,7 +41,7 @@ pcbs:
             type: traces
 ```
 Now you run `node src/cli.js traces pcb.kicad_pcb pcb_with_traces.kicad_pcb --output traces_footprint_file` which will generate the ergogen footprint file `traces_footprint_file` containing all traces, vias and modules which are present in `pcb_with_traces.kicad_pcb` but not in `pcb.kicad_pcb`.
-You now need to make this available to ergogen by adding it to `footprints/index.js`.
+You now need to make this available to ergogen by adding it to `src/footprints/index.js`.
 On all later runs of ergogen, you obtain the usual PCB and the PCB with the additional traces.
 From now on, only edit the latter in KiCad.
 After saving in KiCad, run `traces` again to update the traces footprint file.
@@ -50,4 +54,3 @@ I take no responsibility for anything that might get lost.**
 - add tests
 - allow non-rectangular areas to define which components to choose
 - make it possible to rename certain nets to more reasonable names
-- generate an `index.js` automatically
